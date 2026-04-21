@@ -60,21 +60,68 @@
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
         if (isIOS) {
-            // СОВРЕМЕННЫЙ ПОДХОД (2024-2026):
-            // 1. Smart App Banner (в <head>) автоматически предложит открыть приложение
-            // 2. Если приложение не установлено - редирект на HTTPS App Store URL
-            // 3. itms-apps:// и iframe методы ЗАБЛОКИРОВАНЫ в iOS 18+ Safari
-            
             const appStoreId = '883141609';
-            const appStoreUrl = `https://apps.apple.com/ru/app/id${appStoreId}`;
             
-            // Даем Smart App Banner время показаться (500ms)
-            // Если пользователь кликнет на баннер - приложение откроется
-            setTimeout(() => {
-                // Редиректим на HTTPS App Store
-                // Это единственный надежный способ в современном iOS
-                window.location.href = appStoreUrl;
-            }, 500);
+            // СОВРЕМЕННЫЙ ПОДХОД для Travelata (2026):
+            // Travelata использует AppsFlyer для deep linking
+            // Используем AppsFlyer OneLink URL, который автоматически:
+            // 1. Откроет приложение если оно установлено
+            // 2. Перенаправит в App Store если не установлено
+            
+            // AppsFlyer OneLink URL для Travelata
+            const appsFlyerUrl = `https://app.appsflyer.com/id${appStoreId}`;
+            
+            // Альтернативный подход: пробуем Custom URL Scheme + fallback
+            let appOpened = false;
+            let redirectTimer = null;
+            
+            // Возможные Custom URL Schemes для Travelata
+            const customSchemes = [
+                'travelata://',
+                'travelataru://',
+                'ru.travelata.app://'
+            ];
+            
+            // Отслеживаем события открытия приложения
+            const markAppAsOpened = () => {
+                appOpened = true;
+                if (redirectTimer) {
+                    clearTimeout(redirectTimer);
+                }
+            };
+            
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) markAppAsOpened();
+            });
+            window.addEventListener('blur', markAppAsOpened);
+            window.addEventListener('pagehide', markAppAsOpened);
+            
+            // Пробуем открыть через Custom URL Scheme
+            let schemeIndex = 0;
+            const startTime = Date.now();
+            
+            function tryNextScheme() {
+                if (schemeIndex < customSchemes.length && !appOpened) {
+                    window.location.href = customSchemes[schemeIndex];
+                    schemeIndex++;
+                    
+                    // Пробуем следующую схему через 600ms
+                    setTimeout(tryNextScheme, 600);
+                }
+            }
+            
+            // Начинаем попытки
+            tryNextScheme();
+            
+            // Если через 2.5 секунды ничего не сработало - используем AppsFlyer URL
+            redirectTimer = setTimeout(() => {
+                const elapsed = Date.now() - startTime;
+                
+                if (!appOpened && !document.hidden && elapsed >= 2300) {
+                    // AppsFlyer URL автоматически откроет приложение или App Store
+                    window.location.href = appsFlyerUrl;
+                }
+            }, 2500);
             
         } else {
             // Для других устройств показываем сообщение
