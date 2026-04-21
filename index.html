@@ -56,17 +56,20 @@
     </div>
 
     <script>
-        // Проверяем, что это iOS устройство
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        // Определяем устройство
+        function getDevice() {
+            var ua = navigator.userAgent;
+            if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "ios";
+            if (/Android/.test(ua)) return "android";
+            return "desktop";
+        }
         
-        if (isIOS) {
+        var device = getDevice();
+        
+        if (device === "ios") {
+            // === iOS ЛОГИКА ===
             const appStoreId = '883141609';
             const appStoreUrl = `https://apps.apple.com/ru/app/id${appStoreId}`;
-            
-            // ПРАВИЛЬНЫЙ ПОДХОД для iOS (2026):
-            // Используем Custom URL Scheme с fallback в App Store
-            // Диалог появляется - это нормальное поведение iOS для безопасности
-            // Но если приложение установлено - оно откроется после подтверждения
             
             let appOpened = false;
             
@@ -81,7 +84,6 @@
             window.addEventListener('pagehide', () => { appOpened = true; });
             
             // Пытаемся открыть приложение через Custom URL Scheme
-            // Используем location.replace для более надежной работы
             const startTime = Date.now();
             window.location.replace('travelata://');
             
@@ -94,10 +96,28 @@
                 }
             }, 2500);
             
+        } else if (device === "android") {
+            // === ANDROID ЛОГИКА ===
+            const androidPackage = "ru.travelata.app";
+            const androidStoreUrl = "https://play.google.com/store/apps/details?id=ru.travelata.app";
+            
+            // Android Intent URL для открытия приложения или Play Store
+            const intentUrl =
+                "intent://travelata.ru/" +
+                "#Intent;" +
+                "scheme=https;" +
+                "package=" + androidPackage + ";" +
+                "S.browser_fallback_url=" + encodeURIComponent(androidStoreUrl) + ";end";
+            
+            window.location.href = intentUrl;
+            
         } else {
-            // Для других устройств показываем сообщение
-            document.querySelector('.message').textContent = 'Это приложение доступно только для iOS устройств';
+            // === DESKTOP ЛОГИКА ===
+            // Показываем сообщение для компьютера
             document.querySelector('.spinner').style.display = 'none';
+            document.querySelector('.message').innerHTML = 
+                '<div style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Откройте с телефона</div>' +
+                '<div style="font-size: 15px; color: rgba(255,255,255,0.9); line-height: 1.5;">Эта ссылка ведёт в приложение <strong>Travelata</strong>.<br>Перейдите на сайт со смартфона, чтобы открыть её.</div>';
         }
     </script>
 </body>
