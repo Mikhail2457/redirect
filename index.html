@@ -56,24 +56,26 @@
     </div>
 
     <script>
-        // Получаем параметры из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const deepLink = urlParams.get('link') || '';
-        
-        // ID приложения Travelata в App Store
-        const appStoreId = '883141609';
-        const appStoreUrl = `itms-apps://itunes.apple.com/app/id${appStoreId}`;
-        
         // Проверяем, что это iOS устройство
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
         if (isIOS) {
-            // Для iOS - мгновенный редирект в App Store
-            // Если приложение установлено, Universal Link откроет его до выполнения этого кода
-            // Если не установлено, этот код перенаправит в App Store
+            // СОВРЕМЕННЫЙ ПОДХОД (2024-2026):
+            // 1. Smart App Banner (в <head>) автоматически предложит открыть приложение
+            // 2. Если приложение не установлено - редирект на HTTPS App Store URL
+            // 3. itms-apps:// и iframe методы ЗАБЛОКИРОВАНЫ в iOS 18+ Safari
+            
+            const appStoreId = '883141609';
+            const appStoreUrl = `https://apps.apple.com/ru/app/id${appStoreId}`;
+            
+            // Даем Smart App Banner время показаться (500ms)
+            // Если пользователь кликнет на баннер - приложение откроется
             setTimeout(() => {
+                // Редиректим на HTTPS App Store
+                // Это единственный надежный способ в современном iOS
                 window.location.href = appStoreUrl;
-            }, 25);
+            }, 500);
+            
         } else {
             // Для других устройств показываем сообщение
             document.querySelector('.message').textContent = 'Это приложение доступно только для iOS устройств';

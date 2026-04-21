@@ -42,8 +42,22 @@
         <div>Перенаправление в App Store...</div>
     </div>
     <script>
-        // Мгновенный редирект в App Store
-        window.location.href = 'itms-apps://itunes.apple.com/app/id883141609';
+        // Проверяем iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS) {
+            // ВАЖНО: itms-apps:// блокируется в Safari iOS 18+
+            // Единственный надежный способ - HTTPS редирект
+            // Smart App Banner сверху предложит открыть приложение если оно установлено
+            
+            // Сразу редиректим на HTTPS версию App Store
+            // Если приложение установлено - Smart App Banner откроет его
+            // Если нет - пользователь попадет в App Store
+            window.location.href = 'https://apps.apple.com/ru/app/id883141609';
+        } else {
+            // Для не-iOS просто показываем сообщение
+            document.body.innerHTML = '<div class="container"><div>Это приложение доступно только для iOS</div></div>';
+        }
     </script>
 </body>
 </html>
